@@ -43,24 +43,28 @@ i=1
 test = session.query(ticks).get(i)
 print(test)
 input()
-metiors = [number for number in range(1,34749+1)]
-ofther_data = [number for number in range(1,42811+1)]
-random.shuffle(metiors)
-random.shuffle(ofther_data)
+meteor_data = [number for number in range(1, 34749 + 1)]
+other_data = [number for number in range(1, 42811 + 1)]
+random.shuffle(meteor_data)
+random.shuffle(other_data)
 
 
-metiors_test = [metiors[number] for number in range(31275,31275+3474)]
-ofther_data_test = [ofther_data[number] for number in range(38530,38530+4281)]
+metiors_test = [meteor_data[number] for number in range(31275, 31275 + 3474)]
+ofther_data_test = [other_data[number] for number in range(38530, 38530 + 4281)]
 
-len_metiors = len(metiors)
-len_ofther_data_test = len(ofther_data)
+len_metiors = len(meteor_data)
+len_ofther_data_test = len(other_data)
 for temp in range(len_ofther_data_test-1,38530,-1):
-    ofther_data.pop(temp)
+    other_data.pop(temp)
 for temp in range(len_metiors-1,31274):
-    metiors.pop(temp)
+    meteor_data.pop(temp)
 
-print(len(metiors),metiors)
-print(len(ofther_data),ofther_data)
+print(len(meteor_data), meteor_data)
+print(len(other_data), other_data)
 print(len(metiors_test),metiors_test)
 print(len(ofther_data_test),ofther_data_test)
 
+
+
+for meteor in meteor_data:
+    metior_line = session.query(ticks).get(meteor)
