@@ -43,7 +43,7 @@ i=1
 test = session.query(ticks).get(i)
 print(test)
 input()
-meteor_data = [number for number in range(1, 34749 + 1)]
+meteor_data = [zip(number,1) for number in range(1, 34749 + 1)]
 other_data = [number for number in range(1, 42811 + 1)]
 random.shuffle(meteor_data)
 random.shuffle(other_data)
@@ -64,7 +64,6 @@ print(len(other_data), other_data)
 print(len(metiors_test),metiors_test)
 print(len(ofther_data_test),ofther_data_test)
 
-
-
+All_data =
 for meteor in meteor_data:
     metior_line = session.query(ticks).get(meteor)
