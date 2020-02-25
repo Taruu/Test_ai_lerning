@@ -15,6 +15,8 @@ import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import pickle
+
 
 Base = declarative_base()
 
@@ -46,6 +48,10 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
+def save_all(net,opt,test_data):
+    save_to_piks = {"opt" : opt, "net" : net.state_dict() ,"test_data" : test_data}
+    with open("Ai_all.pkl","wb") as file:
+        pickle.dump(save_to_piks,file)
 
 
 class ticks(Base):
@@ -68,11 +74,17 @@ if __name__ == '__main__':
     random.shuffle(meteor_data)
     random.shuffle(other_data)
 
-    metiors_test = [meteor_data[number] for number in range(31275, 31275 + 3474)]
+    meteors_test = [meteor_data[number] for number in range(31275, 31275 + 3474)]
     ofther_data_test = [other_data[number] for number in range(38530, 38530 + 4281)]
+
+
+    test_data = meteor_data
+    test_data.extend(ofther_data_test)
 
     len_metiors = len(meteor_data)
     len_ofther_data_test = len(other_data)
+
+
     for temp in range(len_ofther_data_test - 1, 38530, -1):
         other_data.pop(temp)
     for temp in range(len_metiors - 1, 31274):
@@ -80,12 +92,20 @@ if __name__ == '__main__':
 
     print(len(meteor_data), meteor_data)
     print(len(other_data), other_data)
-    print(len(metiors_test), metiors_test)
+
+    print(len(meteors_test), meteors_test)
     print(len(ofther_data_test), ofther_data_test)
+    print(len(test_data),test_data)
+
+
+
     All_data_train = meteor_data
     All_data_train.extend(other_data)
+
     print(All_data_train)
+
     random.shuffle(All_data_train)
+
     print(All_data_train)
 
 
@@ -97,7 +117,9 @@ if __name__ == '__main__':
     net.to(device)
     crit = nn.CrossEntropyLoss()
     opt = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
     from torch.autograd import Variable
+
     print("Выборка:",len(All_data_train))
     for epoch in range(2):
         print("start",epoch)
@@ -120,7 +142,8 @@ if __name__ == '__main__':
                                                   running_loss / 2000))
                 running_loss = 0.0
     print("Train OK")
-    torch.save(net.state_dict(), './cifar_net.path')
+    save_all(net,opt,test_data)
+    #torch.save(net.state_dict(), './cifar_net.path')
 
 
 
