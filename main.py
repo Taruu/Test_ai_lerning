@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import torchvision.transforms as transforms
 import pickle
 from datetime import datetime
 import random
@@ -16,15 +17,42 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import pickle
+import datetime
 
+from torch.autograd import Variable
+import torch.optim as optim
 
 Base = declarative_base()
 
 
-engine = create_engine(r'sqlite:///C:\Users\VR_User\PycharmProjects\Test_ai_lerning\all_new_data_42811', echo=False)
+engine_ofther = create_engine(r'sqlite:///all_new_data_42811', echo=False)
 
-Session = sessionmaker(bind=engine)
-session = Session()
+Session_ofther = sessionmaker(bind=engine_ofther)
+session_ofther = Session_ofther()
+
+engine_meteors = create_engine(r'sqlite:///metiors_34749', echo=False)
+
+
+Session_meteors = sessionmaker(bind=engine_meteors)
+session_meteors = Session_ofther()
+
+
+class ticks(Base):
+    __tablename__ = 'frame'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    start = Column(Integer)
+    end = Column(Integer)
+    data = Column(sqlalchemy.types.BLOB)
+
+    def __init__(self,name, start, end, data):
+        self.start = start
+        self.name = name
+        self.end = end
+        self.data = data
+
+
+
 
 
 
@@ -54,19 +82,6 @@ def save_all(net,opt,test_data):
         pickle.dump(save_to_piks,file)
 
 
-class ticks(Base):
-    __tablename__ = 'frame'
-    id = Column(Integer, primary_key=True)
-    name = Column(String)
-    start = Column(Integer)
-    end = Column(Integer)
-    data = Column(sqlalchemy.types.BLOB)
-
-    def __init__(self,name, start, end, data):
-        self.start = start
-        self.name = name
-        self.end = end
-        self.data = data
 
 if __name__ == '__main__':
     meteor_data = [(number, torch.tensor([1])) for number in range(1, 34749 + 1)]
@@ -110,7 +125,7 @@ if __name__ == '__main__':
 
 
     net = Net()
-    import torch.optim as optim
+
     print()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
@@ -118,7 +133,9 @@ if __name__ == '__main__':
     crit = nn.CrossEntropyLoss()
     opt = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-    from torch.autograd import Variable
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     print("Выборка:",len(All_data_train))
     for epoch in range(2):
@@ -129,7 +146,11 @@ if __name__ == '__main__':
             #print(inputs,labels)
             #print()
             opt.zero_grad()
-            v = pickle.loads(session.query(ticks).get(inputs).data)["frames_x16"].to(device)
+            if labels == torch.tensor([1]):
+                v = pickle.loads(session_meteors.query(ticks).get(inputs).data)["frames_x16"].to(device)
+            else:
+                v = pickle.loads(session_ofther.query(ticks).get(inputs).data)["frames_x16"].to(device)
+            #transform(v)
             v = Variable(v[None,...])
             outputs = net(v)
             loss = crit(outputs, labels)
@@ -137,12 +158,19 @@ if __name__ == '__main__':
             opt.step()
 
             running_loss += loss.item()
+            #print(running_loss / 2000)
             if i % 2000 == 1999:
                 print("[%d, %5d]: loss = %.3f" % (epoch + 1, i + 1,
                                                   running_loss / 2000))
                 running_loss = 0.0
     print("Train OK")
-    save_all(net,opt,test_data)
+
+    checkpoint = {'model': Net(),
+                  'state_dict': net.state_dict(),
+                  'optimizer': opt.state_dict()}
+    torch.save(checkpoint, "./net-{}.pt".format(datetime.datetime.now().time()))
+
+    #save_all(net,opt,test_data)
     #torch.save(net.state_dict(), './cifar_net.path')
 
 
