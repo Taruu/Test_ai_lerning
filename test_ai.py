@@ -6,7 +6,7 @@ from torch import *
 import cv2, numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from main import Net
+from main_old import Net
 """
 class Net(nn.Module):
     def __init__(self):
