@@ -16,14 +16,21 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import pickle
-
+from main import Net
 Base = declarative_base()
 
 
-engine = create_engine(r'sqlite:///C:\Users\VR_User\PycharmProjects\Test_ai_lerning\all_new_data_42811', echo=False)
+engine_ofther = create_engine(r'sqlite:////data/all_new_data_42811', echo=False)
 
-Session = sessionmaker(bind=engine)
-session = Session()
+Session_ofther = sessionmaker(bind=engine_ofther)
+session_ofther = Session_ofther()
+
+engine_meteors = create_engine(r'sqlite:////data/metiors_34749', echo=False)
+
+
+Session_meteors = sessionmaker(bind=engine_meteors)
+session_meteors = Session_ofther()
+
 
 
 class ticks(Base):
@@ -42,21 +49,32 @@ class ticks(Base):
 
 
 
+def load_checkpoint(filepath):
+    checkpoint = torch.load(filepath)
+    print(checkpoint.keys())
+    model = checkpoint['model']
+    model.load_state_dict(checkpoint['state_dict'])
+    for parameter in model.parameters():
+        parameter.requires_grad = False
+
+    model.eval()
+    return model
+
+
+meteors_test = [meteor_data[number] for number in range(31275, 31275 + 3474)]
+ofther_data_test = [other_data[number] for number in range(38530, 38530 + 4281)]
+
+
+test_data = meteor_data
+test_data.extend(ofther_data_test)
 
 
 
+net = Net()
 
 
-import pickle
-with open("Ai_all.pkl","rb") as file:
-    vare = pickle.load(file)
+name_file = input("Введите назание ")
 
-print(vare.keys())
 
-net = vare["net"]
-print(vare["test_data"][0])
-id_t = vare["test_data"][0]
-print(id_t[0])
-tsd = pickle.loads(session.query(ticks).get(id_t[0]).data)["frames_x16"]
-with torch.no_grad():
-    print(net(tsd))
+model = load_checkpoint(name_file)
+print()

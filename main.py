@@ -25,12 +25,12 @@ import torch.optim as optim
 Base = declarative_base()
 
 
-engine_ofther = create_engine(r'sqlite:///all_new_data_42811', echo=False)
+engine_ofther = create_engine(r'sqlite:///data/all_new_data_42811', echo=False)
 
 Session_ofther = sessionmaker(bind=engine_ofther)
 session_ofther = Session_ofther()
 
-engine_meteors = create_engine(r'sqlite:///metiors_34749', echo=False)
+engine_meteors = create_engine(r'sqlite:///data/metiors_34749', echo=False)
 
 
 Session_meteors = sessionmaker(bind=engine_meteors)
@@ -78,7 +78,7 @@ class Net(nn.Module):
 
 def save_all(net,opt,test_data):
     save_to_piks = {"opt" : opt, "net" : net.state_dict() ,"test_data" : test_data}
-    with open("Ai_all.pkl","wb") as file:
+    with open("Ai_train/Ai_all.pkl", "wb") as file:
         pickle.dump(save_to_piks,file)
 
 
@@ -138,6 +138,7 @@ if __name__ == '__main__':
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
     print("Выборка:",len(All_data_train))
+
     for epoch in range(2):
         print("start",epoch)
         running_loss = 0.0
@@ -167,8 +168,9 @@ if __name__ == '__main__':
 
     checkpoint = {'model': Net(),
                   'state_dict': net.state_dict(),
-                  'optimizer': opt.state_dict()}
-    torch.save(checkpoint, "./net-{}.pt".format(datetime.datetime.now().time()))
+                  'optimizer': opt.state_dict(),
+                  'Test_data': test_data}
+    torch.save(checkpoint, "./Ai_train/net-{}.pt".format(datetime.datetime.now().time()))
 
     #save_all(net,opt,test_data)
     #torch.save(net.state_dict(), './cifar_net.path')
