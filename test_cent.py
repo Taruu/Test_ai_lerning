@@ -17,15 +17,16 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pickle
 from main import Net
+from torch.autograd import Variable
 Base = declarative_base()
 
 
-engine_ofther = create_engine(r'sqlite:////data/all_new_data_42811', echo=False)
+engine_ofther = create_engine(r'sqlite:///data/all_new_data_42811', echo=False)
 
 Session_ofther = sessionmaker(bind=engine_ofther)
 session_ofther = Session_ofther()
 
-engine_meteors = create_engine(r'sqlite:////data/metiors_34749', echo=False)
+engine_meteors = create_engine(r'sqlite:///data/metiors_34749', echo=False)
 
 
 Session_meteors = sessionmaker(bind=engine_meteors)
@@ -50,23 +51,16 @@ class ticks(Base):
 
 
 def load_checkpoint(filepath):
-    checkpoint = torch.load(filepath)
+    checkpoint = torch.load("Ai_train/"+filepath)
     print(checkpoint.keys())
     model = checkpoint['model']
     model.load_state_dict(checkpoint['state_dict'])
     for parameter in model.parameters():
         parameter.requires_grad = False
-
+    test_data = checkpoint["Test_data"]
     model.eval()
-    return model
+    return model,test_data
 
-
-meteors_test = [meteor_data[number] for number in range(31275, 31275 + 3474)]
-ofther_data_test = [other_data[number] for number in range(38530, 38530 + 4281)]
-
-
-test_data = meteor_data
-test_data.extend(ofther_data_test)
 
 
 
@@ -74,7 +68,30 @@ net = Net()
 
 
 name_file = input("Введите назание ")
+if len(name_file) < 2:
+    name_file = "net-Thursday, 27. February 2020 05:31PM.pt"
 
 
-model = load_checkpoint(name_file)
-print()
+model,test_data = load_checkpoint(name_file)
+random.shuffle(test_data)
+correct = 0
+not_correct = 0
+total = 0
+with torch.no_grad():
+    for data in test_data:
+        inputs,labels = data
+        if labels == torch.tensor([1]):
+            v = pickle.loads(session_meteors.query(ticks).get(inputs).data)["frames_x16"]
+        else:
+            v = pickle.loads(session_ofther.query(ticks).get(inputs).data)["frames_x16"]
+        v = Variable(v[None, ...])
+        outputs = net(v)
+
+        _, predicted = torch.max(outputs.data, 1)
+        if labels == predicted:
+            correct -=- 1
+        else:
+            not_correct -=-1
+        print(outputs,labels,predicted,"Верно предсказали? ",labels == predicted)
+
+print(correct,not_correct)

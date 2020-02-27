@@ -93,11 +93,12 @@ if __name__ == '__main__':
     ofther_data_test = [other_data[number] for number in range(38530, 38530 + 4281)]
 
 
-    test_data = meteor_data
+    test_data = meteors_test
     test_data.extend(ofther_data_test)
 
     len_metiors = len(meteor_data)
     len_ofther_data_test = len(other_data)
+
 
 
     for temp in range(len_ofther_data_test - 1, 38530, -1):
@@ -105,14 +106,14 @@ if __name__ == '__main__':
     for temp in range(len_metiors - 1, 31274):
         meteor_data.pop(temp)
 
-    print(len(meteor_data), meteor_data)
-    print(len(other_data), other_data)
+    print(len(meteor_data), "meteor_data")
+    print(len(other_data), "other_data")
 
-    print(len(meteors_test), meteors_test)
-    print(len(ofther_data_test), ofther_data_test)
-    print(len(test_data),test_data)
+    print(len(meteors_test), "meteors_test")
+    print(len(ofther_data_test), "ofther_data_test")
 
-
+    print(len(test_data),"test_data")
+    print()
 
     All_data_train = meteor_data
     All_data_train.extend(other_data)
@@ -139,7 +140,7 @@ if __name__ == '__main__':
 
     print("Выборка:",len(All_data_train))
 
-    for epoch in range(2):
+    for epoch in range(1):
         print("start",epoch)
         running_loss = 0.0
         for i, data in enumerate(All_data_train, 0):
@@ -170,7 +171,7 @@ if __name__ == '__main__':
                   'state_dict': net.state_dict(),
                   'optimizer': opt.state_dict(),
                   'Test_data': test_data}
-    torch.save(checkpoint, "./Ai_train/net-{}.pt".format(datetime.datetime.now().time()))
+    torch.save(checkpoint, "./Ai_train/net-{}.pt".format(datetime.datetime.now().strftime("%d_%m_%y_%H:%M")))
 
     #save_all(net,opt,test_data)
     #torch.save(net.state_dict(), './cifar_net.path')
