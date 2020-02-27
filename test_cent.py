@@ -92,6 +92,7 @@ with torch.no_grad():
             correct -=- 1
         else:
             not_correct -=-1
-        print(outputs,labels,predicted,"Верно предсказали? ",labels == predicted)
+        #print(outputs,labels,predicted,"Верно предсказали? ",labels == predicted)
 
 print(correct,not_correct)
+print((correct/7755)*100)
