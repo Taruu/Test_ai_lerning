@@ -18,7 +18,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pickle
 import datetime
-
+import numpy
 from torch.autograd import Variable
 import torch.optim as optim
 
@@ -124,12 +124,10 @@ if __name__ == '__main__':
 
     print(All_data_train)
 
-
     net = Net()
 
     print()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(device)
     net.to(device)
     crit = nn.CrossEntropyLoss()
     opt = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
@@ -143,28 +141,57 @@ if __name__ == '__main__':
     for epoch in range(1):
         print("start",epoch)
         running_loss = 0.0
+        load_list = []
+        load_transform_data =[]
         for i, data in enumerate(All_data_train, 0):
-            inputs, labels = data[0],data[1].to(device)
-            #print(inputs,labels)
-            #print()
-            opt.zero_grad()
-            if labels == torch.tensor([1]):
-                v = pickle.loads(session_meteors.query(ticks).get(inputs).data)["frames_x16"].to(device)
-            else:
-                v = pickle.loads(session_ofther.query(ticks).get(inputs).data)["frames_x16"].to(device)
-            #transform(v)
-            v = Variable(v[None,...])
-            outputs = net(v)
-            loss = crit(outputs, labels)
-            loss.backward()
-            opt.step()
+            #print(i % 200 != 0)
+            if i % 100 != 0 or i == 0:
+                load_list.append(data)
+                id_
+                continue
+            print(i)
+            print(session_meteors.query(ticks).filter(ticks.id in load_list))
+            print("start load",i)
+            input()
+            #print(len(load_list))
+            for id_in_list in range(len(load_list)-1):
+                inputs,label = load_list[id_in_list]
+                if label == torch.tensor([1]):
+                    data_temp = pickle.loads(session_meteors.query(ticks).get(inputs).data)["frames_x16"].to(device)
+                else:
+                    data_temp = pickle.loads(session_ofther.query(ticks).get(inputs).data)["frames_x16"].to(device)
+                #print(data_temp)
+                load_transform_data.append(( Variable(data_temp[None, ...]) , label ))
+            print("train")
+            #print(load_transform_data)
+            #input()
+            for data in load_transform_data:
+                inputs, labels = data[0], data[1].to(device)
+                # print(inputs,labels)
+                # print()
 
-            running_loss += loss.item()
-            #print(running_loss / 2000)
-            if i % 2000 == 1999:
-                print("[%d, %5d]: loss = %.3f" % (epoch + 1, i + 1,
-                                                  running_loss / 2000))
-                running_loss = 0.0
+                opt.zero_grad()
+
+                # if labels == torch.tensor([1]):
+                #     v = pickle.loads(session_meteors.query(ticks).get(inputs).data)["frames_x16"].to(device)
+                # else:
+                #     v = pickle.loads(session_ofther.query(ticks).get(inputs).data)["frames_x16"].to(device)
+
+                #v = Variable(v[None, ...])
+                outputs = net(inputs)
+                loss = crit(outputs, labels)
+                loss.backward()
+                opt.step()
+
+                running_loss += loss.item()
+                # print(running_loss / 2000)
+                if i % 2000 == 1999:
+                    print("[%d, %5d]: loss = %.3f" % (epoch + 1, i + 1,
+                                                      running_loss / 2000))
+                    running_loss = 0.0
+            load_list.clear()
+            load_transform_data.clear()
+
     print("Train OK")
 
     checkpoint = {'model': Net(),

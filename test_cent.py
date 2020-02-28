@@ -19,7 +19,7 @@ import pickle
 from main import Net
 from torch.autograd import Variable
 Base = declarative_base()
-
+print(torch.version.cuda)
 
 engine_ofther = create_engine(r'sqlite:///data/all_new_data_42811', echo=False)
 
