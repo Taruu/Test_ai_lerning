@@ -18,8 +18,17 @@ import torch.optim as optim
 import pickle
 from main import Net
 from torch.autograd import Variable
+
 Base = declarative_base()
 print(torch.version.cuda)
+
+
+
+mysql_enj = create_engine('mysql+mysqlconnector://mydb_user:root@localhost:3306/data_ai_learn', echo=False)
+
+Session_mysql = sessionmaker(bind=mysql_enj)
+session_mysql = Session_mysql()
+
 
 engine_ofther = create_engine(r'sqlite:///data/all_new_data_42811', echo=False)
 
@@ -32,7 +41,26 @@ engine_meteors = create_engine(r'sqlite:///data/metiors_34749', echo=False)
 Session_meteors = sessionmaker(bind=engine_meteors)
 session_meteors = Session_ofther()
 
+class mysql_metiors(Base):
+    __tablename__ = 'metiors'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    data = Column(sqlalchemy.types.BLOB)
 
+    def __init__(self,id,name, data):
+        self.id = id
+        self.name = name
+        self.data = data
+
+class mysql_other(Base):
+    __tablename__ = 'other'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    data = Column(sqlalchemy.types.BLOB)
+
+    def __init__(self,name, data):
+        self.name = name
+        self.data = data
 
 class ticks(Base):
     __tablename__ = 'frame'
@@ -54,25 +82,29 @@ def load_checkpoint(filepath):
     checkpoint = torch.load("Ai_train/"+filepath)
     print(checkpoint.keys())
     model = checkpoint['model']
-    model.load_state_dict(checkpoint['state_dict'])
-    for parameter in model.parameters():
-        parameter.requires_grad = False
+    state = checkpoint['state_dict']
+    #for parameter in model.parameters():
+    #    parameter.requires_grad = False
     test_data = checkpoint["Test_data"]
-    model.eval()
-    return model,test_data
+
+    return model,state,test_data
 
 
 
 
-net = Net()
 
 
 name_file = input("Введите назание ")
 if len(name_file) < 2:
-    name_file = "net-Thursday, 27. February 2020 05:31PM.pt"
+    name_file = "net-03_03_20_09:04.pt"
 
+model,state,test_data = load_checkpoint(name_file)
+print(model)
+print(state)
+net = Net()
+net.load_state_dict(state)
+net.eval()
 
-model,test_data = load_checkpoint(name_file)
 random.shuffle(test_data)
 correct = 0
 not_correct = 0
@@ -81,10 +113,10 @@ with torch.no_grad():
     for data in test_data:
         inputs,labels = data
         if labels == torch.tensor([1]):
-            v = pickle.loads(session_meteors.query(ticks).get(inputs).data)["frames_x16"]
+            data_temp = pickle.loads(session_mysql.query(mysql_metiors).get(inputs).data)["frames_x16"]
         else:
-            v = pickle.loads(session_ofther.query(ticks).get(inputs).data)["frames_x16"]
-        v = Variable(v[None, ...])
+            data_temp = pickle.loads(session_mysql.query(mysql_other).get(inputs).data)["frames_x16"]
+        v = Variable(data_temp[None, ...])
         outputs = net(v)
 
         _, predicted = torch.max(outputs.data, 1)
@@ -92,7 +124,8 @@ with torch.no_grad():
             correct -=- 1
         else:
             not_correct -=-1
+        print('correct', correct, "not correct", not_correct)
         #print(outputs,labels,predicted,"Верно предсказали? ",labels == predicted)
 
-print(correct,not_correct)
+print('correct',correct,"not correct",not_correct)
 print((correct/7755)*100)
